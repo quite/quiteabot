@@ -60,9 +60,7 @@ func main() {
 	}
 
 	tbc, err := tb.NewBot(tb.Settings{
-		Token: conf.TelegramToken,
-		// // You can also set custom API URL. If field is empty it equals to "https://api.telegram.org"
-		// URL:    "http://195.129.111.17:8012",
+		Token:  conf.TelegramToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
 	if err != nil {
@@ -71,7 +69,6 @@ func main() {
 	}
 
 	tbc.Handle(tb.OnText, func(m *tb.Message) {
-		// 780111986 me
 		msg := fmt.Sprintf("%s%s<%d>: %s", m.Sender.FirstName, m.Sender.LastName, m.Sender.ID, m.Text)
 		fmt.Printf("---\nfrom: %s\n", msg)
 		xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: msg})
@@ -86,7 +83,7 @@ func main() {
 			}
 			switch v := chat.(type) {
 			case xmpp.Chat:
-				fmt.Printf("---\nfrom: %s\n", v.Remote)
+				fmt.Printf("---\nfrom: %s: %s\n", v.Remote, v.Text)
 				if !strings.HasPrefix(v.Remote, conf.XMPPTarget) {
 					fmt.Printf("ignored\n")
 					continue
@@ -94,13 +91,13 @@ func main() {
 				usermsg := strings.SplitN(v.Text, ":", 2)
 				if len(usermsg) < 2 {
 					xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: "expected: user:the msg"})
-					fmt.Printf("wrong format: %s\n", v.Text)
+					fmt.Printf("wrong format\n")
 					continue
 				}
 				userid := conf.TelegramUsers[usermsg[0]]
 				if userid == 0 || len(usermsg[1]) == 0 {
 					xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: "unknown user"})
-					fmt.Printf("unknown user: %s (or empty msg)\n", usermsg[0])
+					fmt.Printf("unknown user/empty msg\n")
 					continue
 				}
 				tbc.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
