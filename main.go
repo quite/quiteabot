@@ -33,11 +33,19 @@ func parseconfig(filename string) (conf *Config, err error) {
 	return
 }
 
+var conf *Config
+
+func xmppsend(c *xmpp.Client, msg string) {
+	if _, err := c.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: msg}); err != nil {
+		log.Println(err)
+	}
+}
+
 func main() {
 	var xmppc *xmpp.Client
 	var err error
 
-	conf, err := parseconfig("quiteabot.yaml")
+	conf, err = parseconfig("quiteabot.yaml")
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +79,7 @@ func main() {
 	tbc.Handle(tb.OnText, func(m *tb.Message) {
 		msg := fmt.Sprintf("%s%s<%d>: %s", m.Sender.FirstName, m.Sender.LastName, m.Sender.ID, m.Text)
 		fmt.Printf("---\nfrom: %s\n", msg)
-		xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: msg})
+		xmppsend(xmppc, msg)
 		fmt.Printf("relayed to xmpp\n")
 	})
 
@@ -90,13 +98,13 @@ func main() {
 				}
 				usermsg := strings.SplitN(v.Text, ":", 2)
 				if len(usermsg) < 2 {
-					xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: "expected: user:the msg"})
+					xmppsend(xmppc, "expected: user:the msg")
 					fmt.Printf("wrong format\n")
 					continue
 				}
 				userid := conf.TelegramUsers[usermsg[0]]
 				if userid == 0 || len(usermsg[1]) == 0 {
-					xmppc.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: "unknown user"})
+					xmppsend(xmppc, "unknown user")
 					fmt.Printf("unknown user/empty msg\n")
 					continue
 				}
