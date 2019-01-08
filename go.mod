@@ -11,4 +11,5 @@ require (
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
 	golang.org/x/sys v0.0.0-20190108104531-7fbe1cd0fcc2 // indirect
 	gopkg.in/tucnak/telebot.v2 v2.0.0-20190106130618-430758b3741d
+	gopkg.in/yaml.v2 v2.2.2
 )
