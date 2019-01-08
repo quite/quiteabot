@@ -67,7 +67,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tbc, err := tb.NewBot(tb.Settings{
+	telec, err := tb.NewBot(tb.Settings{
 		Token:  conf.TelegramToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
@@ -76,7 +76,7 @@ func main() {
 		return
 	}
 
-	tbc.Handle(tb.OnText, func(m *tb.Message) {
+	telec.Handle(tb.OnText, func(m *tb.Message) {
 		msg := fmt.Sprintf("%s%s<%d>: %s", m.Sender.FirstName, m.Sender.LastName, m.Sender.ID, m.Text)
 		fmt.Printf("---\nfrom: %s\n", msg)
 		xmppsend(xmppc, msg)
@@ -108,7 +108,7 @@ func main() {
 					fmt.Printf("unknown user/empty msg\n")
 					continue
 				}
-				tbc.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
+				telec.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
 				fmt.Printf("relayed to <%d>\n", userid)
 				// case xmpp.Presence:
 				// 	fmt.Println(v.From, v.Show)
@@ -116,5 +116,5 @@ func main() {
 		}
 	}()
 
-	tbc.Start()
+	telec.Start()
 }
