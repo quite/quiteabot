@@ -1,0 +1,7 @@
+xmppserver: "xmpp.example.com:5222"
+xmppuser: "quiteabot@example.com"
+xmpppass: "secret"
+xmpptarget: "me@example.com"
+telegramtoken: "123:AT0KEN"
+telegramusers:
+  me: 999999999
