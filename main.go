@@ -66,6 +66,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("xmpp: connected")
 
 	telec, err := tb.NewBot(tb.Settings{
 		Token:  conf.TelegramToken,
@@ -75,6 +76,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+	log.Println("telegram: connected")
 
 	telec.Handle(tb.OnText, func(m *tb.Message) {
 		msg := fmt.Sprintf("%s%s<%d>: %s", m.Sender.FirstName, m.Sender.LastName, m.Sender.ID, m.Text)
