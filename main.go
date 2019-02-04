@@ -79,10 +79,20 @@ func main() {
 	log.Println("telegram: connected")
 
 	telec.Handle(tb.OnText, func(m *tb.Message) {
-		msg := fmt.Sprintf("%s%s<%d>: %s", m.Sender.FirstName, m.Sender.LastName, m.Sender.ID, m.Text)
-		fmt.Printf("---\nfrom: %s\n", msg)
-		xmppsend(xmppc, msg)
-		fmt.Printf("relayed to xmpp\n")
+		var from string
+		for user, userid := range conf.TelegramUsers {
+			if userid == m.Sender.ID {
+				from = user
+				break
+			}
+		}
+		if from == "" {
+			from = fmt.Sprintf("\"%s %s\" @%s <%d>", m.Sender.FirstName,
+				m.Sender.LastName, m.Sender.Username, m.Sender.ID)
+		}
+		log.Printf("%s -> %s\n", from, conf.XMPPTarget)
+		fmt.Printf(">%s\n", m.Text)
+		xmppsend(xmppc, fmt.Sprintf("%s: %s", from, m.Text))
 	})
 
 	go func() {
@@ -93,27 +103,31 @@ func main() {
 			}
 			switch v := chat.(type) {
 			case xmpp.Chat:
-				fmt.Printf("---\nfrom: %s: %s\n", v.Remote, v.Text)
+				// only care about msgs from our xmpptarget
 				if !strings.HasPrefix(v.Remote, conf.XMPPTarget) {
-					fmt.Printf("ignored\n")
+					log.Printf("%s : ignored\n", v.Remote)
+					fmt.Printf(">%s\n", v.Text)
 					continue
 				}
 				usermsg := strings.SplitN(v.Text, ":", 2)
 				if len(usermsg) < 2 {
-					xmppsend(xmppc, "expected: user:the msg")
-					fmt.Printf("wrong format\n")
+					msg := "expected format: user:the msg"
+					log.Printf("%s : %s", v.Remote, msg)
+					fmt.Printf(">%s\n", v.Text)
+					xmppsend(xmppc, msg)
 					continue
 				}
 				userid := conf.TelegramUsers[usermsg[0]]
-				if userid == 0 || len(usermsg[1]) == 0 {
-					xmppsend(xmppc, "unknown user")
-					fmt.Printf("unknown user/empty msg\n")
+				if userid == 0 || usermsg[1] == "" {
+					msg := "unlisted user or empty msg"
+					log.Printf("%s : %s", v.Remote, msg)
+					fmt.Printf(">%s\n", v.Text)
+					xmppsend(xmppc, msg)
 					continue
 				}
 				telec.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
-				fmt.Printf("relayed to <%d>\n", userid)
-				// case xmpp.Presence:
-				// 	fmt.Println(v.From, v.Show)
+				log.Printf("%s -> %s <%d>\n", v.Remote, usermsg[0], userid)
+				fmt.Printf(">%s\n", usermsg[1])
 			}
 		}
 	}()
