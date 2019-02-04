@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	Verbose       bool
 	XMPPServer    string
 	XMPPUser      string
 	XMPPPass      string
@@ -91,7 +92,9 @@ func main() {
 				m.Sender.LastName, m.Sender.Username, m.Sender.ID)
 		}
 		log.Printf("%s -> %s\n", from, conf.XMPPTarget)
-		fmt.Printf(">%s\n", m.Text)
+		if conf.Verbose {
+			fmt.Printf(">%s\n", m.Text)
+		}
 		xmppsend(xmppc, fmt.Sprintf("%s: %s", from, m.Text))
 	})
 
@@ -106,14 +109,18 @@ func main() {
 				// only care about msgs from our xmpptarget
 				if !strings.HasPrefix(v.Remote, conf.XMPPTarget) {
 					log.Printf("%s : ignored\n", v.Remote)
-					fmt.Printf(">%s\n", v.Text)
+					if conf.Verbose {
+						fmt.Printf(">%s\n", v.Text)
+					}
 					continue
 				}
 				usermsg := strings.SplitN(v.Text, ":", 2)
 				if len(usermsg) < 2 {
 					msg := "expected format: user:the msg"
 					log.Printf("%s : %s", v.Remote, msg)
-					fmt.Printf(">%s\n", v.Text)
+					if conf.Verbose {
+						fmt.Printf(">%s\n", v.Text)
+					}
 					xmppsend(xmppc, msg)
 					continue
 				}
@@ -121,13 +128,17 @@ func main() {
 				if userid == 0 || usermsg[1] == "" {
 					msg := "unlisted user or empty msg"
 					log.Printf("%s : %s", v.Remote, msg)
-					fmt.Printf(">%s\n", v.Text)
+					if conf.Verbose {
+						fmt.Printf(">%s\n", v.Text)
+					}
 					xmppsend(xmppc, msg)
 					continue
 				}
 				telec.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
 				log.Printf("%s -> %s <%d>\n", v.Remote, usermsg[0], userid)
-				fmt.Printf(">%s\n", usermsg[1])
+				if conf.Verbose {
+					fmt.Printf(">%s\n", usermsg[1])
+				}
 			}
 		}
 	}()

@@ -1,3 +1,4 @@
+verbose: false
 xmppserver: "xmpp.example.com:5222"
 xmppuser: "quiteabot@example.com"
 xmpppass: "secret"
