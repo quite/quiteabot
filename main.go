@@ -95,7 +95,7 @@ func main() {
 		if conf.Verbose {
 			fmt.Printf(">%s\n", m.Text)
 		}
-		xmppsend(xmppc, fmt.Sprintf("%s: %s", from, m.Text))
+		xmppsend(xmppc, fmt.Sprintf("%s> %s", from, m.Text))
 	})
 
 	go func() {
