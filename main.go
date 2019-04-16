@@ -38,7 +38,7 @@ var conf *Config
 
 func xmppsend(c *xmpp.Client, msg string) {
 	if _, err := c.Send(xmpp.Chat{Remote: conf.XMPPTarget, Type: "chat", Text: msg}); err != nil {
-		log.Println(err)
+		log.Printf("xmpp send FAIL: %s\n", err)
 	}
 }
 
@@ -134,7 +134,9 @@ func main() {
 					xmppsend(xmppc, msg)
 					continue
 				}
-				telec.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview)
+				if _, err := telec.Send(&tb.User{ID: userid}, usermsg[1], tb.NoPreview); err != nil {
+					log.Printf("teleg send FAIL: %s\n", err)
+				}
 				log.Printf("%s -> %s <%d>\n", v.Remote, usermsg[0], userid)
 				if conf.Verbose {
 					fmt.Printf(">%s\n", usermsg[1])
