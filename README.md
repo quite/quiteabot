@@ -2,9 +2,11 @@
 This is a tiny two-way Telegram-bot to XMPP-bridge. I has worked well for me
 for talking to some people that prefer Telegram.
 
-You need to
+# Setup
 
-- cp quiteabot.yaml.example quiteabot.yaml
+To set it up, you need to:
+
+- `cp quiteabot.yaml.example quiteabot.yaml`
 - Fill out the bot's XMPP account (`xmppserver`, `xmppuser`, `xmpppass`)
 - Set `xmpptarget` to your own jid, or so
 - Get a Telegram account (mobile phone number needed)
@@ -13,14 +15,21 @@ You need to
 - Map some Telegram userids to names in the config (actually conversation ids,
   but I don't think they change) (`telegramusers`)
 
-Telegram users need to chat up your bot with `/start`, and then message you.
-**quiteabot** will forward the message to the configured `xmpptarget`,
-resolving the name from the userid, if present in `telegramusers`.
+# Usage
 
-To send a message to a Telegram user, you send it over XMPP to the bot
-(`xmppuser`). The message must be prefixed with a `username:` from the mapping.
-Yes, the Telegram-users must initiate the conversation; that's how Telegram
-bots work.
+Your friend needs to:
 
-TODO: Can only message a user by name, so first need to stuff her into
-`telegramusers`.
+- Initially chat up your Telegram bot by its name and tell it `/start`
+- Message the bot to message you
+
+*quiteabot* will forward the message to the configured `xmpptarget`, resolving
+the name from the userid, if present in `telegramusers`.
+
+To message a Telegram user, you need to:
+
+- Send a message over XMPP to your bot, prefixing it with a `username:` from
+  the mapping
+
+# TODO
+
+Can only message a user by name, so first need to stuff her into `telegramusers`.
