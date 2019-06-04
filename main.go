@@ -142,7 +142,7 @@ func main() {
 
 		// photos are always jpg it seems
 		fpath := path.Join(conf.DownloadPath,
-			fmt.Sprintf("%s-%s.jpg", from, m.Time().Format(time.RFC3339)))
+			fmt.Sprintf("from_%s_%s.jpg", from, m.Time().Format("20060102T150405")))
 
 		if err = telec.Download(&file, fpath); err != nil {
 			log.Printf("Error: from: %s, Download(%v,...): %v\n", from, file, err)
@@ -153,7 +153,39 @@ func main() {
 		if conf.Verbose {
 			fmt.Printf(">[caption: %s]\n", m.Caption)
 		}
-		xmppsend(xmppc, fmt.Sprintf("%s> [downloaded photo: %s caption: %s]", from, fpath, m.Caption))
+		xmppsend(xmppc, fmt.Sprintf("%s> [downloaded photo: %s caption: %s]",
+			from, fpath, m.Caption))
+	})
+
+	telec.Handle(tb.OnDocument, func(m *tb.Message) {
+		from := conf.resolveUser(m.Sender)
+
+		// TODO? should send xmpp about errors?
+		if m.Document.FileID == "" {
+			log.Printf("Error: from: %s, document but empty fileid!\n", from)
+			return
+		}
+
+		file, err := telec.FileByID(m.Document.FileID)
+		if err != nil {
+			log.Printf("Error: from: %s, FileByID(%v): %v\n", from, m.Document.FileID, err)
+			return
+		}
+
+		fpath := path.Join(conf.DownloadPath,
+			fmt.Sprintf("from_%s_%s_%s", from, m.Time().Format("20060102T150405"), m.Document.FileName))
+
+		if err = telec.Download(&file, fpath); err != nil {
+			log.Printf("Error: from: %s, Download(%v,...): %v\n", from, file, err)
+			return
+		}
+
+		log.Printf("%s: downloaded document (%s): %s\n", from, m.Document.MIME, fpath)
+		if conf.Verbose {
+			fmt.Printf(">[mime: %s, caption: %s]\n", m.Document.MIME, m.Caption)
+		}
+		xmppsend(xmppc, fmt.Sprintf("%s> [downloaded document: %s mime: %s caption: %s]",
+			from, fpath, m.Document.MIME, m.Caption))
 	})
 
 	go func() {
