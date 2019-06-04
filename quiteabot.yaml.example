@@ -6,3 +6,4 @@ xmpptarget: "me@example.com"
 telegramtoken: "123:AT0KEN"
 telegramusers:
   me: 999999999
+downloadpath: "./download"

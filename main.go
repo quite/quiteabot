@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
+	"os"
+	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,9 +24,25 @@ type Config struct {
 	XMPPTarget    string
 	TelegramToken string
 	TelegramUsers map[string]int
+	DownloadPath  string
 }
 
-func parseconfig(filename string) (conf *Config, err error) {
+func (c *Config) resolveUser(user *tb.User) string {
+	var from string
+	for nameduser, userid := range c.TelegramUsers {
+		if userid == user.ID {
+			from = nameduser
+			break
+		}
+	}
+	if from == "" {
+		from = fmt.Sprintf("\"%s %s\" @%s <%d>", user.FirstName,
+			user.LastName, user.Username, user.ID)
+	}
+	return from
+}
+
+func newConfig(filename string) (conf *Config, err error) {
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
@@ -31,6 +51,19 @@ func parseconfig(filename string) (conf *Config, err error) {
 	if err = yaml.Unmarshal(contents, &conf); err != nil {
 		return
 	}
+
+	if conf.DownloadPath == "" {
+		conf.DownloadPath = "."
+	}
+	var f *os.File
+	fname := path.Join(conf.DownloadPath, strconv.Itoa(rand.Int()))
+	if f, err = os.OpenFile(fname, os.O_RDWR|os.O_CREATE, 0600); err != nil {
+		err = fmt.Errorf("downloadpath `%s` not writable: %s", conf.DownloadPath, err)
+		return
+	}
+	f.Close()
+	os.Remove(fname)
+
 	return
 }
 
@@ -46,9 +79,12 @@ func main() {
 	var xmppc *xmpp.Client
 	var err error
 
-	conf, err = parseconfig("quiteabot.yaml")
+	rand.Seed(time.Now().UnixNano())
+
+	conf, err = newConfig("quiteabot.yaml")
 	if err != nil {
-		panic(err)
+		fmt.Printf("config failed: %s\n", err)
+		os.Exit(1)
 	}
 
 	options := xmpp.Options{
@@ -80,22 +116,44 @@ func main() {
 	log.Println("telegram: connected")
 
 	telec.Handle(tb.OnText, func(m *tb.Message) {
-		var from string
-		for user, userid := range conf.TelegramUsers {
-			if userid == m.Sender.ID {
-				from = user
-				break
-			}
-		}
-		if from == "" {
-			from = fmt.Sprintf("\"%s %s\" @%s <%d>", m.Sender.FirstName,
-				m.Sender.LastName, m.Sender.Username, m.Sender.ID)
-		}
+		from := conf.resolveUser(m.Sender)
+
 		log.Printf("%s -> %s\n", from, conf.XMPPTarget)
 		if conf.Verbose {
 			fmt.Printf(">%s\n", m.Text)
 		}
 		xmppsend(xmppc, fmt.Sprintf("%s> %s", from, m.Text))
+	})
+
+	telec.Handle(tb.OnPhoto, func(m *tb.Message) {
+		from := conf.resolveUser(m.Sender)
+
+		// TODO? should send xmpp about errors?
+		if m.Photo.FileID == "" {
+			log.Printf("Error: from: %s, photo but empty fileid!\n", from)
+			return
+		}
+
+		file, err := telec.FileByID(m.Photo.FileID)
+		if err != nil {
+			log.Printf("Error: from: %s, FileByID(%v): %v\n", from, m.Photo.FileID, err)
+			return
+		}
+
+		// photos are always jpg it seems
+		fpath := path.Join(conf.DownloadPath,
+			fmt.Sprintf("%s-%s.jpg", from, m.Time().Format(time.RFC3339)))
+
+		if err = telec.Download(&file, fpath); err != nil {
+			log.Printf("Error: from: %s, Download(%v,...): %v\n", from, file, err)
+			return
+		}
+
+		log.Printf("%s: downloaded photo: %s\n", from, fpath)
+		if conf.Verbose {
+			fmt.Printf(">[caption: %s]\n", m.Caption)
+		}
+		xmppsend(xmppc, fmt.Sprintf("%s> [downloaded photo: %s caption: %s]", from, fpath, m.Caption))
 	})
 
 	go func() {
