@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+cd "${0%/*}" || exit 1
+
+if docker >&/dev/null top quiteabot; then
+  echo already running
+  exit 0
+fi
+
+docker run --name=quiteabot -d  --restart=always \
+       --mount type=bind,source="$(pwd)"/quiteabot.yaml,target=/quiteabot.yaml,readonly \
+       --mount type=bind,source="$(pwd)"/download,target=/download \
+  quiteabot:latest
