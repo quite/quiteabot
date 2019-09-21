@@ -7,7 +7,10 @@ for talking to some people that prefer Telegram.
 To set it up, you need to:
 
 - `cp quiteabot.yaml.example quiteabot.yaml`
-- Fill out the bot's XMPP account (`xmppserver`, `xmppuser`, `xmpppass`)
+- Fill out the bot's XMPP account (`xmppuser`, `xmpppass`)
+  - The XMPP server host & port is found by looking up the DNS SRV record
+    associated with the host part of the `xmppuser` (jabber ID). `xmppserver`
+    can be set to override this.
 - Set `xmpptarget` to your own jid, or so
 - Get a Telegram account (mobile phone number needed)
 - Register a Telegram bot: https://core.telegram.org/bots

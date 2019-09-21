@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"path"
 	"strconv"
@@ -75,6 +76,24 @@ func xmppsend(c *xmpp.Client, msg string) {
 	}
 }
 
+func hostFromSRV(XMPPUser string) (string, error) {
+	parts := strings.Split(XMPPUser, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("xmppuser not a jabber ID: %s", XMPPUser)
+	}
+	_, addrs, err := net.LookupSRV("xmpp-client", "tcp", parts[1])
+	if err != nil {
+		return "", err
+	}
+	// just picking the first srv record
+	host, port := addrs[0].Target, addrs[0].Port
+	if host == "" || port <= 0 {
+		return "", fmt.Errorf("bad SRV record: %s:%d", host, port)
+	}
+	hostPort := net.JoinHostPort(strings.TrimSuffix(host, "."), strconv.Itoa(int(port)))
+	return hostPort, nil
+}
+
 func main() {
 	var xmppc *xmpp.Client
 	var err error
@@ -87,8 +106,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	host := conf.XMPPServer
+	if host == "" {
+		host, err = hostFromSRV(conf.XMPPUser)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	options := xmpp.Options{
-		Host:          conf.XMPPServer,
+		Host:          host,
 		User:          conf.XMPPUser,
 		Password:      conf.XMPPPass,
 		NoTLS:         true,

@@ -1,7 +1,7 @@
 verbose: false
-xmppserver: "xmpp.example.com:5222"
 xmppuser: "quiteabot@example.com"
 xmpppass: "secret"
+# xmppserver: "xmpp.example.com:5222"
 xmpptarget: "me@example.com"
 telegramtoken: "123:AT0KEN"
 telegramusers:
