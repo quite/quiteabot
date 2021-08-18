@@ -35,4 +35,4 @@ To message a Telegram user, you need to:
 
 # TODO
 
-Can only message a user by name, so first need to stuff her into `telegramusers`.
+Can only message a user by name, so first need to stuff them into `telegramusers`.
